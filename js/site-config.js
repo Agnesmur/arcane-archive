@@ -3,5 +3,5 @@
 // НИКОГДА не добавляй сюда service_role или secret key!
 window.ARCANE_CLOUD_CONFIG = {
   url: '',  // пример: 'https://abcdefgh.supabase.co'
-  key: ''   // пример: 'sb_publishable_...'
+  key: 'sb_publishable_HE9KGN5tDfhDVtZST53R_A_I-yntyxb'   // пример: 'sb_publishable_...'
 };
