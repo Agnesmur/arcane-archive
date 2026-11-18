@@ -56,3 +56,5 @@
 @media(max-width:580px){.spellbook-circle{padding:12px}.spellbook-circle-head h3{font-size:20px}.spellbook-number{font-size:10px}.journey-gear-grid{grid-template-columns:1fr}}
 
 .journey-xp{display:block;margin-top:5px;color:#d9b989;font-size:12px;font-weight:600}.journey-spell-level{line-height:1.5}
+
+.route-select{display:flex;flex-wrap:wrap;gap:10px;padding:12px 0 18px}.route-select .hint{width:100%;margin:0}.route-select .btn{white-space:normal;text-align:center}

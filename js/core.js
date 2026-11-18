@@ -10,6 +10,31 @@ for(const b of state.builds){
  Object.assign(b,{title:defaultBuild.title,subtitle:defaultBuild.subtitle,description:defaultBuild.description,weapon:defaultBuild.weapon,weaponStages:structuredClone(defaultBuild.weaponStages),tips:defaultBuild.tips,phases:structuredClone(defaultBuild.phases),items:structuredClone(defaultBuild.items).map(i=>({...i,done:doneTitles.has(i.title)||(i.id==='i1'&&doneTitles.has('Освоить стартовый Broadsword'))})),buildRevision:5});
  if(!b.phases.some(p=>p.level===Number(b.selectedPhase)))b.selectedPhase=13;
 }
+// Перевод стандартного рыцаря на маршрут А/Б: сохраняем выполнение старых задач.
+function upgradeDS2Build(builds){
+ const b=builds.find(x=>x.id===defaultBuild.id&&x.gameId==='ds2');
+ if(!b||(Number(b.buildRevision)||0)>=12)return;
+ const oldDone=new Set((b.items||[]).filter(i=>i.done).map(i=>i.title));
+ const alias={
+  'Купить Утигатану':['Купить Утигатану'],
+  'Купить второй Палаш':['Купить второй Палаш'],
+  'Получить Чёрную катану':['Получить Чёрную катану'],
+  'Достичь 16 STR / 9 DEX':['Достичь 16 STR / 9 DEX'],
+  'Довести DEX до 40':['Довести DEX до 40'],
+  'Обменять душу Гибкого часового':['Если не хочется фармить: обменять душу Гибкого часового'],
+  'Проверить клавиши Power Stance':['Освоить парные атаки'],
+  'Достичь 22 STR / 37 DEX':['Опционально: 22 STR / 37 DEX']};
+ const oldSelected=Number(b.selectedPhase)||13;
+ const updated=structuredClone(defaultBuild);
+ updated.created=b.created||updated.created;
+ updated.public=!!b.public;
+ updated.selectedPhase=updated.phases.some(p=>p.level===oldSelected)?oldSelected:13;
+ updated.items=updated.items.map(i=>({...i,done:oldDone.has(i.title)||(alias[i.title]||[]).some(a=>oldDone.has(a))}));
+ // Сохраняем собственные заметки пользователя отдельно от новых советов.
+ if(b.userNotes)updated.userNotes=b.userNotes;
+ Object.assign(b,updated);
+}
+upgradeDS2Build(state.builds);
 // Добавляем новый тип билда без изменения уже существующей библиотеки.
 if(!state.games.some(g=>g.id===JOURNEY_GAME.id))state.games.push(structuredClone(JOURNEY_GAME));
 const existingJourney=state.builds.find(b=>b.id===JOURNEY_LILITH.id);
