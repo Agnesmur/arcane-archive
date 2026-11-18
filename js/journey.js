@@ -5,8 +5,69 @@ function journeySelect(id,cid,publicView=false){const b=publicView?shareBuild:st
 function journeyCheck(id,chapterId,kind,index,checked){const b=state.builds.find(x=>x.id===id);const chapter=b?.chapters?.find(c=>c.id===chapterId);const collection=kind==='gear'?chapter?.gear:chapter?.tasks;if(!collection?.[index])return;collection[index].done=checked;save();renderJourney(id)}
 function journeyCheckList(b,c,kind,publicView){const rows=c[kind]||[];if(!rows.length)return '<p class="hint">Пока нет записей.</p>';return rows.map((r,i)=>{const label=kind==='gear'?`${r.slot}: ${r.name}`:r.title;const description=kind==='gear'?r.how:r.detail;const group=kind==='tasks'&&(!i||r.category!==rows[i-1].category)?`<div class="checkgroup-title">${esc(r.category||'Задачи')}</div>`:'';return group+`<label class="checkline ${r.done?'done':''}"><input type="checkbox" ${r.done?'checked':''} ${publicView?'disabled':''} onchange="journeyCheck('${esc(b.id)}','${esc(c.id)}','${kind}',${i},this.checked)"><span><b>${esc(label)}</b>${description?`<small>${esc(description)}</small>`:''}</span></label>`}).join('')}
 function journeyCount(b){const all=b.chapters.flatMap(c=>[...(c.tasks||[]),...(c.gear||[])]);return [all.filter(x=>x.done).length,all.length]}
-function journeySpellChips(priority){return String(priority||'').split(/→|·|,/).map(x=>x.trim()).filter(Boolean).map(sp=>`<span class="spell-chip">${esc(sp)}</span>`).join('')}
-function journeySpellbook(c){const rows=c.milestones||[];if(!rows.length)return '<p class="hint">Пока нет записей в книге заклинаний.</p>';return `<div class="spellbook-grid">${rows.map(m=>`<article class="spellbook-card"><div class="spellbook-top"><small>${esc(m.level||'')}</small><h3>${esc(m.level||'Этап')}</h3></div><div class="spellbook-chips">${journeySpellChips(m.priority)}</div>${m.usage?`<p>${esc(m.usage)}</p>`:''}</article>`).join('')}</div>`}
+// Шпаргалка по кругам: данные билда остаются редактируемыми, роли вычисляются по названиям.
+const JOURNEY_SPELLS=[
+ ['Сон',1,'control'],['Слепота',1,'control'],['Щит',1,'defense'],['Магическая стрела',1,'damage'],['Безрассудные чары Нахаля',1,'wild'],
+ ['Паутина',2,'control'],['Зеркальное отражение',2,'defense'],['Сверкающая пыль',2,'control'],['Щит хаоса',2,'wild'],
+ ['Ускорение',3,'support'],['Замедление',3,'control'],['Череп-ловушка',3,'damage'],
+ ['Каменная кожа',4,'defense'],['Великий сглаз',4,'control'],['Улучшенная невидимость',4,'defense'],['Тайное слово',4,'dispel'],
+ ['Хаос',5,'control'],['Оживление мёртвых',5,'summon'],['Брешь',5,'dispel'],['Иммунитет к заклинаниям',5,'defense'],['Понижение сопротивления',5,'dispel'],
+ ['Улучшенное ускорение',6,'support'],['Защита от магического оружия',6,'defense'],['Истинное зрение',6,'dispel'],
+ ['Улучшенный щит хаоса',7,'wild'],['Рубиновый луч обратного действия',7,'dispel'],
+ ['Ужасное иссушение Аби-Далзима',8,'damage'],['Спусковой механизм заклинаний',8,'support'],['Пробить щит',8,'dispel'],
+ ['Последовательная заготовка',9,'support'],['Остановка времени',9,'support'],['Желание',9,'support'],
+ ['Призыв тёмного планетара','HLA','summon'],['Повышенная стремительность','HLA','support'],['Дыхание дракона','HLA','damage']
+];
+const JOURNEY_SPELL_ALIASES={
+ 'improved ускорение':'Улучшенное ускорение','improved хаос щит':'Улучшенный щит хаоса','хаос щит':'Щит хаоса',
+ 'pierce щит':'Пробить щит','бессрассудные чары нахаля':'Безрассудные чары Нахаля',
+ 'horrid wilting':'Ужасное иссушение Аби-Далзима',
+ 'sleep':'Сон','blindness':'Слепота','shield':'Щит','magic missile':'Магическая стрела',
+ 'web':'Паутина','mirror image':'Зеркальное отражение','glitterdust':'Сверкающая пыль',
+ 'haste':'Ускорение','slow':'Замедление','skull trap':'Череп-ловушка',
+ 'stoneskin':'Каменная кожа','greater malison':'Великий сглаз','improved invisibility':'Улучшенная невидимость',
+ 'chaos':'Хаос','animate dead':'Оживление мёртвых','chaos shield':'Щит хаоса',
+ 'breach':'Брешь','secret word':'Тайное слово','spell immunity':'Иммунитет к заклинаниям',
+ 'improved haste':'Улучшенное ускорение','improved chaos shield':'Улучшенный щит хаоса',
+ 'true sight':'Истинное зрение','ruby ray of reversal':'Рубиновый луч обратного действия',
+ 'spell trigger':'Спусковой механизм заклинаний','pierce shield':'Пробить щит',
+ 'time stop':'Остановка времени','wish':'Желание','dragon’s breath':'Дыхание дракона'
+};
+const JOURNEY_SPELL_ROLE={control:['Контроль','◈'],defense:['Защита','⬡'],damage:['Урон','✦'],support:['Поддержка','✧'],dispel:['Снятие защит','◇'],summon:['Призыв','♜'],wild:['Дикая магия','✺'],other:['Прочее','•']};
+const JOURNEY_CIRCLE_NAMES=['','I круг','II круг','III круг','IV круг','V круг','VI круг','VII круг','VIII круг','IX круг'];
+function journeySpellEntries(c){
+ const result=[];
+ for(const m of c.milestones||[]){
+  for(const segment of String(m.priority||'').split(/\s*(?:→|·|,)\s*/)){
+   const raw=segment.trim();if(!raw)continue;
+   const qty=raw.match(/\s*(×\s*\d+(?:\s*[–-]\s*\d+)?)\s*$/);
+   const nameRaw=raw.replace(/\s*×\s*\d+(?:\s*[–-]\s*\d+)?\s*$/,'').trim();
+   const aliased=JOURNEY_SPELL_ALIASES[nameRaw.toLocaleLowerCase('ru')]||nameRaw;
+   const meta=JOURNEY_SPELLS.find(x=>x[0].toLocaleLowerCase('ru')===aliased.toLocaleLowerCase('ru'));
+   const inferred=(String(m.level).match(/(?:^|\s)([IVX]+)\s*круг/i)||[])[1];
+   const roman={'I':1,'II':2,'III':3,'IV':4,'V':5,'VI':6,'VII':7,'VIII':8,'IX':9};
+   const circle=meta?.[1]||roman[inferred]||'other';
+   result.push({name:meta?.[0]||aliased,quantity:qty?.[1]||'',circle,role:meta?.[2]||'other',stage:m.level||'',usage:m.usage||''});
+  }
+ }
+ return result;
+}
+function journeySpellbook(c){
+ const spells=journeySpellEntries(c);
+ if(!spells.length)return '<p class="hint">Пока нет записей в книге заклинаний.</p>';
+ const order=[1,2,3,4,5,6,7,8,9,'HLA','other'];
+ const groups=order.filter(k=>spells.some(s=>s.circle===k));
+ const legend=Object.entries(JOURNEY_SPELL_ROLE).filter(([role])=>spells.some(s=>s.role===role)).map(([role,[label,sym]])=>`<span class="spell-role spell-role-${role}"><span aria-hidden="true">${sym}</span> ${esc(label)}</span>`).join('');
+ return `<div class="spellbook-legend" aria-label="Типы заклинаний">${legend}</div><div class="spellbook-circles">${groups.map(circle=>{
+ const entries=spells.filter(s=>s.circle===circle);
+ const title=circle==='HLA'?'Высокоуровневые способности':circle==='other'?'Другие заклинания':JOURNEY_CIRCLE_NAMES[circle];
+ return `<section class="spellbook-circle"><div class="spellbook-circle-head"><div><small>GRIMOIRE · ${esc(c.short||'')}</small><h3>${esc(title)}</h3></div><span class="spellbook-number">${entries.length} ${entries.length===1?'запись':'записи'}</span></div><div class="spellbook-grid">${entries.map(sp=>{const role=JOURNEY_SPELL_ROLE[sp.role]||JOURNEY_SPELL_ROLE.other;return `<article class="spellbook-card spell-card-${sp.role}"><div class="spellbook-card-head"><span class="spell-role spell-role-${sp.role}"><span aria-hidden="true">${role[1]}</span> ${esc(role[0])}</span>${sp.quantity?`<span class="spellbook-quantity">${esc(sp.quantity)}</span>`:''}</div><h4>${esc(sp.name)}</h4><small class="spellbook-stage">Этап: ${esc(sp.stage)}</small>${sp.usage?`<p>${esc(sp.usage)}</p>`:''}</article>`}).join('')}</div></section>`}).join('')}</div>`;
+}
+function journeyGearCards(b,c,publicView){
+ const rows=c.gear||[];
+ if(!rows.length)return '<p class="hint">Пока нет предметов.</p>';
+ return `<div class="journey-gear-grid">${rows.map((item,i)=>`<label class="journey-gear-card ${item.done?'done':''}"><span class="journey-gear-head"><span class="journey-gear-slot">${esc(item.slot||'Предмет')}</span><input aria-label="Найдено: ${esc(item.name)}" type="checkbox" ${item.done?'checked':''} ${publicView?'disabled':''} onchange="journeyCheck('${esc(b.id)}','${esc(c.id)}','gear',${i},this.checked)"></span><strong>${esc(item.name||'Без названия')}</strong>${item.how?`<span class="journey-gear-how">${esc(item.how)}</span>`:''}<span class="journey-gear-status">${item.done?'✓ Найдено':'○ Ещё не найдено'}</span></label>`).join('')}</div>`;
+}
 function renderJourney(id,publicView=false){const b=publicView?shareBuild:state.builds.find(x=>x.id===id);if(!b||b.type!=='journey')return shell('<div class="empty">Сквозной билд не найден</div>');const c=journeyChapter(b),g=game(b.gameId)||JOURNEY_GAME;const [done,total]=journeyCount(b);const chapterDone=(c.tasks||[]).filter(x=>x.done).length+(c.gear||[]).filter(x=>x.done).length,chapterTotal=(c.tasks||[]).length+(c.gear||[]).length;const controls=publicView?'<button class="btn" onclick="nav(\'home\')">К библиотеке</button>':`<button class="btn" onclick="nav('journeyedit/${esc(b.id)}')">✎ Редактировать главы</button><button class="btn" onclick="togglePublish('${esc(b.id)}')">${b.public?'◉ Скрыть':'↗ Поделиться'}</button><button class="btn ghost" onclick="duplicate('${esc(b.id)}')">⧉ Копировать</button>`;
  const chapterTabs=(b.chapters||[]).map((ch,i)=>`<button class="journey-tab ${c.id===ch.id?'selected':''}" onclick="journeySelect('${esc(b.id)}','${esc(ch.id)}',${publicView})"><small>ГЛАВА ${i+1}</small>${esc(ch.short||ch.title)}</button>`).join('');
  const profileImage=(b.profile?.portrait&&!publicView?`<div class="journey-portrait-wrap"><img class="journey-portrait" src="${esc(b.profile.portrait)}" alt="${esc(b.profile?.portraitAlt||b.profile?.name||'Портрет персонажа')}"></div>`:b.profile?.portrait?`<div class="journey-portrait-wrap"><img class="journey-portrait" src="${esc(b.profile.portrait)}" alt="${esc(b.profile?.portraitAlt||b.profile?.name||'Портрет персонажа')}"></div>`:'');
@@ -14,7 +75,7 @@ function renderJourney(id,publicView=false){const b=publicView?shareBuild:state.
  const spells=(c.milestones||[]).map(m=>`<div class="journey-spell"><div class="journey-spell-level">${esc(m.level)}</div><div><strong>${esc(m.priority)}</strong><p>${esc(m.usage||'')}</p></div></div>`).join('');
  const tactics=(c.tactics||[]).map(t=>`<li>${esc(t)}</li>`).join('');
  const shareInfo=b.public&&!publicView?`<div class="notice">Публичная ссылка: <a href="${esc(base()+'#share/'+b.id)}" target="_blank" rel="noopener">${esc(base()+'#share/'+b.id)}</a> <button class="btn ghost" onclick="copyShare('${esc(b.id)}')">Копировать</button><br>Чтобы ссылка открывалась другим людям, синхронизируй билд с облаком.</div>`:'';
- shell(`<div class="hero journey-hero"><div class="eyebrow">CHARACTER JOURNEY · ${esc(g.short)}</div><h1>${esc(b.title)}</h1><p>${esc(b.description||'')}</p><span class="tag">${esc(b.subtitle||'Сквозной билд')}</span><div class="stats"><div class="stat"><strong>${b.chapters.length}</strong><small>Кампании</small></div><div class="stat"><strong>${done}/${total}</strong><small>Отмечено целей и предметов</small></div></div></div><div class="toolbar">${controls}</div>${shareInfo}<div class="journey-tabs">${chapterTabs}</div><div class="journey-current"><div class="eyebrow">${esc(c.subtitle||'')}</div><h2>${esc(c.title)}</h2><div class="journey-meta"><span>Уровень: ${esc(c.level||'—')}</span><span>Опыт: ${esc(c.xp||'—')}</span><span>Прогресс главы: ${chapterDone}/${chapterTotal}</span></div><p>${esc(c.summary||'')}</p></div><div class="layout2"><section><div class="panel"><div class="eyebrow">LEVEL & SPELL PLANNER</div><h2>Развитие и заклинания</h2>${spells||'<p class="hint">Пока нет этапов.</p>'}</div><div class="panel spellbook-panel"><div class="eyebrow">SPELLBOOK</div><h2>Книга заклинаний Лилит</h2><p class="hint">Отдельная наглядная подборка заклинаний для текущей главы. Названия показаны по русской локализации.</p>${journeySpellbook(c)}</div><div class="panel"><div class="eyebrow">COMBAT GUIDE</div><h2>Как играть</h2><p class="journey-preserve">${esc(c.weapon||'')}</p><ul class="journey-tactics">${tactics}</ul></div><div class="panel"><div class="eyebrow">IMPORT & CONTINUITY</div><h2>Переход к следующей главе</h2><p class="journey-preserve">${esc(c.transfer||'')}</p><p class="hint">Это описание переноса, а не автоматический импорт игрового сохранения.</p></div></section><aside><div class="panel"><div class="eyebrow">CHARACTER SHEET</div><h2>Профиль Лилит</h2>${profile}</div><div class="panel"><div class="eyebrow">EQUIPMENT</div><h2>Предметы и где найти</h2><p class="hint">Отмечай найденные предметы по каждой кампании.</p>${journeyCheckList(b,c,'gear',publicView)}</div><div class="panel"><div class="eyebrow">CHECKLIST</div><h2>Задачи главы</h2><p class="hint">Не связаны с отметками других кампаний.</p>${journeyCheckList(b,c,'tasks',publicView)}</div></aside></div>${b.notes?`<div class="panel"><h2>Общие заметки</h2><p class="journey-preserve">${esc(b.notes)}</p></div>`:''}`,g.theme||'arcane')}
+ shell(`<div class="hero journey-hero"><div class="eyebrow">CHARACTER JOURNEY · ${esc(g.short)}</div><h1>${esc(b.title)}</h1><p>${esc(b.description||'')}</p><span class="tag">${esc(b.subtitle||'Сквозной билд')}</span><div class="stats"><div class="stat"><strong>${b.chapters.length}</strong><small>Кампании</small></div><div class="stat"><strong>${done}/${total}</strong><small>Отмечено целей и предметов</small></div></div></div><div class="toolbar">${controls}</div>${shareInfo}<div class="journey-tabs">${chapterTabs}</div><div class="journey-current"><div class="eyebrow">${esc(c.subtitle||'')}</div><h2>${esc(c.title)}</h2><div class="journey-meta"><span>Уровень: ${esc(c.level||'—')}</span><span>Опыт: ${esc(c.xp||'—')}</span><span>Прогресс главы: ${chapterDone}/${chapterTotal}</span></div><p>${esc(c.summary||'')}</p></div><div class="layout2"><section><div class="panel"><div class="eyebrow">LEVEL & SPELL PLANNER</div><h2>Развитие и заклинания</h2>${spells||'<p class="hint">Пока нет этапов.</p>'}</div><div class="panel spellbook-panel"><div class="eyebrow">SPELLBOOK</div><h2>Книга заклинаний Лилит</h2><p class="hint">Заклинания распределены по кругам магии. Метки показывают их роль в бою, а количество подготовленных копий — рядом с названием.</p>${journeySpellbook(c)}</div><div class="panel"><div class="eyebrow">COMBAT GUIDE</div><h2>Как играть</h2><p class="journey-preserve">${esc(c.weapon||'')}</p><ul class="journey-tactics">${tactics}</ul></div><div class="panel"><div class="eyebrow">IMPORT & CONTINUITY</div><h2>Переход к следующей главе</h2><p class="journey-preserve">${esc(c.transfer||'')}</p><p class="hint">Это описание переноса, а не автоматический импорт игрового сохранения.</p></div></section><aside><div class="panel"><div class="eyebrow">CHARACTER SHEET</div><h2>Профиль Лилит</h2>${profile}</div><div class="panel"><div class="eyebrow">EQUIPMENT</div><h2>Предметы и где найти</h2><p class="hint">Отмечай найденные предметы по каждой кампании.</p>${journeyGearCards(b,c,publicView)}</div><div class="panel"><div class="eyebrow">CHECKLIST</div><h2>Задачи главы</h2><p class="hint">Не связаны с отметками других кампаний.</p>${journeyCheckList(b,c,'tasks',publicView)}</div></aside></div>${b.notes?`<div class="panel"><h2>Общие заметки</h2><p class="journey-preserve">${esc(b.notes)}</p></div>`:''}`,g.theme||'arcane')}
 function journeyEncodeRows(rows,type){return (rows||[]).map(x=>type==='milestones'?[x.level,x.priority,x.usage].join(' | '):type==='gear'?[x.slot,x.name,x.how].join(' | '):type==='tasks'?[x.category,x.title,x.detail].join(' | '):x).join('\n')}
 function journeyDecodeRows(s,type,old=[]){return String(s||'').split('\n').map(x=>x.trim()).filter(Boolean).map(line=>{const a=line.split('|').map(v=>v.trim());if(type==='milestones')return {level:a.shift()||'',priority:a.shift()||'',usage:a.join(' | ')};if(type==='gear'){const slot=a.shift()||'',name=a.shift()||'',how=a.join(' | ');return {slot,name,how,done:old.some(x=>x.slot===slot&&x.name===name&&x.done)}}if(type==='tasks'){const category=a.shift()||'',title=a.shift()||'',detail=a.join(' | ');return {category,title,detail,done:old.some(x=>x.title===title&&x.done)}}return line})}
 function journeyEdit(id){const b=state.builds.find(x=>x.id===id);if(!b||b.type!=='journey')return nav('home');const c=journeyChapter(b);const fields=(label,key,value,rows=3)=>`<label>${label}</label><textarea class="field" name="${key}" rows="${rows}">${esc(value||'')}</textarea>`;

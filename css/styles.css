@@ -13,3 +13,44 @@
 .journey-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0}.journey-tab{cursor:pointer;text-align:center;background:#1a1a28;border:1px solid #444052;color:#c8b9d7;padding:15px 8px;border-radius:13px;font-size:15px;font-weight:650}.journey-tab small{display:block;font-size:10px;color:#9c88b0;letter-spacing:.12em;margin-bottom:5px}.journey-tab.selected{background:linear-gradient(135deg,#473456,#272033);border-color:#c4a2d3;color:#ffe5b2}.journey-current{background:linear-gradient(110deg,#262039,#151722);border:1px solid #65516a;padding:25px;border-radius:18px;margin-bottom:20px}.journey-current h2{font-family:Georgia,serif;font-size:28px;color:#f0d3ad;margin:8px 0}.journey-current p{color:#c2b9ca;line-height:1.75}.journey-meta{display:flex;gap:8px;flex-wrap:wrap}.journey-meta span{display:inline-block;border:1px solid #554a62;border-radius:30px;padding:6px 10px;color:#dac7e5;font-size:12px}.journey-spell{display:grid;grid-template-columns:minmax(90px,135px) 1fr;gap:15px;border-top:1px solid #454052;padding:15px 0}.journey-spell-level{color:#f1c88b;font-weight:650}.journey-spell strong{color:#f4e7f3;font-size:14px}.journey-spell p{font-size:13px;line-height:1.7;color:#bcb5c7;margin:7px 0 0}.journey-portrait-wrap{margin:0 0 14px;display:flex;justify-content:center}.journey-portrait{width:min(100%,260px);aspect-ratio:1/1;object-fit:cover;border-radius:18px;border:1px solid #65516a;box-shadow:0 12px 26px rgba(0,0,0,.28)}.spellbook-panel{position:relative;overflow:hidden}.spellbook-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}.spellbook-card{background:linear-gradient(160deg,rgba(54,40,77,.9),rgba(22,22,34,.96));border:1px solid #5f5070;border-radius:16px;padding:16px;box-shadow:0 10px 24px rgba(0,0,0,.18)}.spellbook-top small{display:block;color:#caa9d9;letter-spacing:.12em;text-transform:uppercase;font-size:10px;margin-bottom:6px}.spellbook-top h3{margin:0 0 10px;font-family:Georgia,serif;font-size:20px;color:#f3d4a7}.spellbook-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.spell-chip{display:inline-block;padding:7px 10px;border-radius:999px;border:1px solid #7d6a92;background:rgba(255,255,255,.05);color:#f4e7f3;font-size:12px;line-height:1.35}.spellbook-card p{margin:0;color:#cbbfd3;line-height:1.7;font-size:13px}
 
 .journey-profile-row{padding:9px 0;border-bottom:1px solid #393241}.journey-profile-row small{display:block;font-size:11px;color:#ab97b6}.journey-profile-row strong{display:block;margin-top:3px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}.journey-tactics{color:#cfc3d4;line-height:1.8;padding-left:22px}.journey-tactics li{margin:0 0 12px}.journey-preserve{white-space:pre-wrap;line-height:1.8;color:#d2c2d6}.theme-arcane .hero{background:linear-gradient(125deg,#241e36,#11121e)}.theme-arcane .eyebrow{color:#ddb5ec}.checkline span b{font-weight:650}.checkline span small{display:block;line-height:1.6;margin-top:5px}@media(max-width:700px){.journey-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-spell{grid-template-columns:1fr;gap:4px}.journey-current{padding:18px}}
+
+
+/* Arcane Archive v10: книга по кругам и карточки экипировки */
+.spellbook-panel{overflow:visible}
+.spellbook-legend{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 22px}
+.spell-role{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;font-size:11px;font-weight:700;border:1px solid;border-radius:7px;line-height:1.4;white-space:nowrap}
+.spell-role-control{color:#c8b6ff;border-color:#6c58aa;background:#382d55}
+.spell-role-defense{color:#a4ddf8;border-color:#3c829e;background:#1e4254}
+.spell-role-damage{color:#ffb4a4;border-color:#b25b53;background:#572a2b}
+.spell-role-support{color:#ffe0a5;border-color:#a17d40;background:#493b29}
+.spell-role-dispel{color:#b8e8d0;border-color:#438c70;background:#234437}
+.spell-role-summon{color:#e9bdf1;border-color:#8e609e;background:#492f51}
+.spell-role-wild{color:#ffd19b;border-color:#b87656;background:#543628}
+.spell-role-other{color:#d2ccdc;border-color:#716b80;background:#37333f}
+.spellbook-circles{display:grid;gap:22px}
+.spellbook-circle{min-width:0;border:1px solid #514962;border-radius:17px;background:linear-gradient(125deg,rgba(67,52,82,.25),rgba(15,17,29,.15));padding:16px}
+.spellbook-circle-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:13px;padding-bottom:11px;border-bottom:1px solid #5a4c64}
+.spellbook-circle-head small{display:block;color:#aa96bb;font-size:10px;letter-spacing:.13em;text-transform:uppercase;margin-bottom:4px}
+.spellbook-circle-head h3{font:normal 23px Georgia,serif;color:#f0d3ad;margin:0}
+.spellbook-number{font-size:11px;color:#bdaec9;flex:none}
+.spellbook-circle .spellbook-grid{margin-top:0;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.spellbook-circle .spellbook-card{padding:14px;min-width:0;display:flex;flex-direction:column;gap:7px;border-left-width:3px}
+.spellbook-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.spellbook-card h4{font:normal 18px Georgia,serif;color:#fff0d7;margin:4px 0 0;overflow-wrap:anywhere}
+.spellbook-stage{color:#a8a0bd;font-size:11px}
+.spellbook-quantity{color:#f6d7a3;border:1px solid #a17d40;border-radius:7px;padding:5px 8px;font-weight:700;font-size:12px}
+.spellbook-circle .spellbook-card p{margin-top:6px;border-top:1px solid #51485c;padding-top:9px}
+.spell-card-control{border-left-color:#a58aea}.spell-card-defense{border-left-color:#5dbbd8}.spell-card-damage{border-left-color:#ec8577}.spell-card-support{border-left-color:#dfb365}.spell-card-dispel{border-left-color:#71c69b}.spell-card-summon{border-left-color:#c98cde}.spell-card-wild{border-left-color:#e8a569}
+.journey-gear-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,215px),1fr));gap:12px;margin-top:14px}
+.journey-gear-card{display:flex;flex-direction:column;gap:8px;min-width:0;background:linear-gradient(145deg,#2d2739,#1c1d2a);border:1px solid #5b4b62;border-radius:13px;padding:15px;cursor:pointer;transition:border-color .2s,background .2s}
+.journey-gear-card:hover{border-color:#c2a1cc}
+.journey-gear-card:focus-within{outline:2px solid #d4b78a;outline-offset:2px}
+.journey-gear-head{display:flex;justify-content:space-between;align-items:center;gap:9px}
+.journey-gear-head input{width:18px;height:18px;accent-color:#d8b779;cursor:pointer;flex:none}
+.journey-gear-slot{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#dec79e}
+.journey-gear-card strong{font:normal 18px Georgia,serif;color:#f1dfc6;overflow-wrap:anywhere}
+.journey-gear-how{font-size:12px;line-height:1.6;color:#c1b5ca;flex:1;white-space:pre-wrap}
+.journey-gear-status{font-size:11px;color:#c9a97e;border-top:1px solid #51455b;padding-top:9px}
+.journey-gear-card.done{border-color:#658c76;background:linear-gradient(145deg,#263b35,#1d2529)}
+.journey-gear-card.done .journey-gear-status{color:#a7e0bd}
+@media(max-width:580px){.spellbook-circle{padding:12px}.spellbook-circle-head h3{font-size:20px}.spellbook-number{font-size:10px}.journey-gear-grid{grid-template-columns:1fr}}
