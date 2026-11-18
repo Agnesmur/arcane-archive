@@ -10,6 +10,9 @@ for(const b of state.builds){
  Object.assign(b,{title:defaultBuild.title,subtitle:defaultBuild.subtitle,description:defaultBuild.description,weapon:defaultBuild.weapon,weaponStages:structuredClone(defaultBuild.weaponStages),tips:defaultBuild.tips,phases:structuredClone(defaultBuild.phases),items:structuredClone(defaultBuild.items).map(i=>({...i,done:doneTitles.has(i.title)||(i.id==='i1'&&doneTitles.has('Освоить стартовый Broadsword'))})),buildRevision:5});
  if(!b.phases.some(p=>p.level===Number(b.selectedPhase)))b.selectedPhase=13;
 }
+// Добавляем новый тип билда без изменения уже существующей библиотеки.
+if(!state.games.some(g=>g.id===JOURNEY_GAME.id))state.games.push(structuredClone(JOURNEY_GAME));
+if(!state.builds.some(b=>b.id===JOURNEY_LILITH.id))state.builds.push(structuredClone(JOURNEY_LILITH));
 localStorage.setItem(STORAGE,JSON.stringify(state));
 let config;try{config=JSON.parse(localStorage.getItem(CONFIG))||{}}catch{config={}}config={...PUBLIC_CLOUD,...config};let session;try{session=JSON.parse(localStorage.getItem(SESSION))}catch{};let route={page:'home'},editing=false,authMode='login',shareBuild=null;let cloudBusy=false;const saveLocal=()=>localStorage.setItem(STORAGE,JSON.stringify(state));saveLocal();
 const qs=(s)=>encodeURIComponent(s);const base=()=>location.href.split('#')[0];const nav=(path)=>{location.hash=path};const notify=(t)=>{document.querySelector('.toast')?.remove();let el=document.createElement('div');el.className='toast';el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),3800)};
