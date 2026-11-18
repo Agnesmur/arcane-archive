@@ -12,7 +12,33 @@ for(const b of state.builds){
 }
 // Добавляем новый тип билда без изменения уже существующей библиотеки.
 if(!state.games.some(g=>g.id===JOURNEY_GAME.id))state.games.push(structuredClone(JOURNEY_GAME));
-if(!state.builds.some(b=>b.id===JOURNEY_LILITH.id))state.builds.push(structuredClone(JOURNEY_LILITH));
+const existingJourney=state.builds.find(b=>b.id===JOURNEY_LILITH.id);
+if(!existingJourney){
+ state.builds.push(structuredClone(JOURNEY_LILITH));
+}else if((existingJourney.journeyRevision||0)<(JOURNEY_LILITH.journeyRevision||1)){
+ const merged=structuredClone(JOURNEY_LILITH);
+ const taskDone=new Map();
+ const gearDone=new Map();
+ for(const ch of existingJourney.chapters||[]){
+  for(const t of ch.tasks||[]) taskDone.set(`${ch.id}::${t.title}`,!!t.done);
+  for(const g of ch.gear||[]) gearDone.set(`${ch.id}::${g.slot}::${g.name}`,!!g.done);
+ }
+ merged.public=existingJourney.public||false;
+ merged.created=existingJourney.created||merged.created;
+ merged.selectedChapter=existingJourney.selectedChapter||merged.selectedChapter;
+ merged.profile={...merged.profile,...existingJourney.profile,portrait:JOURNEY_LILITH.profile?.portrait||existingJourney.profile?.portrait||''};
+ merged.notes=existingJourney.notes&&existingJourney.notes!==''?existingJourney.notes:merged.notes;
+ merged.chapters=merged.chapters.map(ch=>{
+  const old=(existingJourney.chapters||[]).find(x=>x.id===ch.id)||{};
+  return {...ch,
+   tasks:(ch.tasks||[]).map(t=>({...t,done:taskDone.get(`${ch.id}::${t.title}`)||false})),
+   gear:(ch.gear||[]).map(g=>({...g,done:gearDone.get(`${ch.id}::${g.slot}::${g.name}`)||false})),
+   selected:old.selected||ch.selected
+  };
+ });
+ const idx=state.builds.findIndex(b=>b.id===existingJourney.id);
+ state.builds[idx]=merged;
+}
 localStorage.setItem(STORAGE,JSON.stringify(state));
 let config;try{config=JSON.parse(localStorage.getItem(CONFIG))||{}}catch{config={}}config={...PUBLIC_CLOUD,...config};let session;try{session=JSON.parse(localStorage.getItem(SESSION))}catch{};let route={page:'home'},editing=false,authMode='login',shareBuild=null;let cloudBusy=false;const saveLocal=()=>localStorage.setItem(STORAGE,JSON.stringify(state));saveLocal();
 const qs=(s)=>encodeURIComponent(s);const base=()=>location.href.split('#')[0];const nav=(path)=>{location.hash=path};const notify=(t)=>{document.querySelector('.toast')?.remove();let el=document.createElement('div');el.className='toast';el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),3800)};
