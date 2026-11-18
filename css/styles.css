@@ -54,3 +54,5 @@
 .journey-gear-card.done{border-color:#658c76;background:linear-gradient(145deg,#263b35,#1d2529)}
 .journey-gear-card.done .journey-gear-status{color:#a7e0bd}
 @media(max-width:580px){.spellbook-circle{padding:12px}.spellbook-circle-head h3{font-size:20px}.spellbook-number{font-size:10px}.journey-gear-grid{grid-template-columns:1fr}}
+
+.journey-xp{display:block;margin-top:5px;color:#d9b989;font-size:12px;font-weight:600}.journey-spell-level{line-height:1.5}

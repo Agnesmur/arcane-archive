@@ -15,7 +15,7 @@ if(!state.games.some(g=>g.id===JOURNEY_GAME.id))state.games.push(structuredClone
 const existingJourney=state.builds.find(b=>b.id===JOURNEY_LILITH.id);
 if(!existingJourney){
  state.builds.push(structuredClone(JOURNEY_LILITH));
-}else if((existingJourney.journeyRevision||0)<(JOURNEY_LILITH.journeyRevision||1)){
+}else if((existingJourney.journeyRevision||0)<3){
  const merged=structuredClone(JOURNEY_LILITH);
  const taskDone=new Map();
  const gearDone=new Map();
@@ -39,6 +39,20 @@ if(!existingJourney){
  const idx=state.builds.findIndex(b=>b.id===existingJourney.id);
  state.builds[idx]=merged;
 }
+// Сквозной билд: новые планы по уровням не заменяют пользовательские заметки и заклинания.
+function applyJourneyLevelPlans(builds){
+ const b=builds.find(x=>x.id===JOURNEY_LILITH.id&&x.type==='journey');
+ if(!b)return;
+ for(const id of ['sod','tob']){
+  const chapter=b.chapters?.find(x=>x.id===id);
+  const template=JOURNEY_LILITH.chapters.find(x=>x.id===id);
+  if(chapter&&!Array.isArray(chapter.levelPlan))chapter.levelPlan=structuredClone(template.levelPlan);
+  if(chapter&&chapter.levelPlan?.length===0)chapter.levelPlan=structuredClone(template.levelPlan);
+  if(chapter){if(!chapter.xp||/^(До 500|До 8 000|500 000|8 000 000)/.test(chapter.xp))chapter.xp=template.xp;if(!chapter.level||['10–11','18+'].includes(chapter.level))chapter.level=template.level;}
+ }
+ b.journeyRevision=Math.max(b.journeyRevision||0,JOURNEY_LILITH.journeyRevision||0);
+}
+applyJourneyLevelPlans(state.builds);
 localStorage.setItem(STORAGE,JSON.stringify(state));
 let config;try{config=JSON.parse(localStorage.getItem(CONFIG))||{}}catch{config={}}config={...PUBLIC_CLOUD,...config};let session;try{session=JSON.parse(localStorage.getItem(SESSION))}catch{};let route={page:'home'},editing=false,authMode='login',shareBuild=null;let cloudBusy=false;const saveLocal=()=>localStorage.setItem(STORAGE,JSON.stringify(state));saveLocal();
 const qs=(s)=>encodeURIComponent(s);const base=()=>location.href.split('#')[0];const nav=(path)=>{location.hash=path};const notify=(t)=>{document.querySelector('.toast')?.remove();let el=document.createElement('div');el.className='toast';el.textContent=t;document.body.append(el);setTimeout(()=>el.remove(),3800)};
